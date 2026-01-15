@@ -175,6 +175,9 @@
         gap: 10px;
         flex-direction: row;
     }
+    .region--navigation{
+        display: none;
+    }
 }
 
 @media screen and (max-width: 845px) {
