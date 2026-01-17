@@ -19,9 +19,9 @@ class CloudflareService
 
     public function __construct()
     {
-        $this->apiToken = config('services.cloudflare.api_token', '');
-        $this->apiEmail = config('services.cloudflare.api_email', '');
-        $this->apiKey = config('services.cloudflare.api_key', '');
+        $this->apiToken = (string) config('services.cloudflare.api_token', '');
+        $this->apiEmail = (string) config('services.cloudflare.api_email', '');
+        $this->apiKey = (string) config('services.cloudflare.api_key', '');
     }
 
     /**
