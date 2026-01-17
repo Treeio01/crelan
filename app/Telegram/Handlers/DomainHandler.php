@@ -159,8 +159,9 @@ TEXT;
             $isAvailable = $this->cloudflareService->checkDomainAvailability($domain->domain);
             $statusEmoji = $isAvailable ? '✅' : '⚠️';
             
+            $ipAddress = $domain->ip_address ?? 'Не указан';
             $text .= "{$statusEmoji} <code>{$domain->domain}</code>\n";
-            $text .= "   └ IP: <code>{$domain->ip_address ?? 'Не указан'}</code>\n\n";
+            $text .= "   └ IP: <code>{$ipAddress}</code>\n\n";
 
             // Добавляем кнопки для каждого домена
             $keyboard->addRow(
@@ -220,11 +221,12 @@ TEXT;
             $statusEmoji = $isAvailable ? '✅' : '⚠️';
             $statusText = $isAvailable ? 'Работает' : 'Не доступен';
 
+            $ipAddress = $domainModel->ip_address ?: 'Не указан';
             $text = <<<TEXT
 🌐 <b>Информация о домене</b>
 
 <b>Домен:</b> <code>{$domainModel->domain}</code>
-📍 <b>IP:</b> <code>{$domainModel->ip_address ?? 'Не указан'}</code>
+📍 <b>IP:</b> <code>{$ipAddress}</code>
 🔒 <b>SSL:</b> {$domainModel->ssl_mode}
 {$statusEmoji} <b>Статус:</b> {$statusText}
 
@@ -284,11 +286,12 @@ TEXT;
         // Сохраняем pending_action для редактирования домена
         $admin->setPendingAction($domain, 'edit_domain');
 
+        $currentIp = $domainModel->ip_address ?: 'Не указан';
         $text = <<<TEXT
 ✏️ <b>Редактирование IP домена</b>
 
 <b>Домен:</b> <code>{$domain}</code>
-<b>Текущий IP:</b> <code>{$domainModel->ip_address ?? 'Не указан'}</code>
+<b>Текущий IP:</b> <code>{$currentIp}</code>
 
 Отправьте новый IP адрес:
 TEXT;
