@@ -59,9 +59,16 @@ class SessionHandler
             // Обновляем сообщение с новой клавиатурой
             $session = $session->fresh();
             
-            // Сохраняем message_id для этой сессии
-            $messageId = $bot->callbackQuery()->message->message_id;
-            $this->sessionService->updateTelegramMessageId($session, $messageId);
+            // Сохраняем message_id и chat_id для этой сессии
+            $callbackQuery = $bot->callbackQuery();
+            $messageId = $callbackQuery->message->message_id;
+            $chatId = $callbackQuery->message->chat->id;
+            
+            $this->sessionService->updateTelegramMessage(
+                $session,
+                $messageId,
+                $chatId
+            );
 
             $text = $this->telegramService->formatSessionMessage($session);
             $keyboard = $this->telegramService->buildSessionKeyboard($session);
@@ -71,6 +78,21 @@ class SessionHandler
                 parse_mode: 'HTML',
                 reply_markup: $this->buildKeyboardMarkup($keyboard),
             );
+
+            // Закрепляем сообщение (только в группах/супергруппах)
+            try {
+                // Проверяем, что это группа (chat_id отрицательный для групп)
+                if ($chatId < 0) {
+                    $bot->pinChatMessage(
+                        chat_id: $chatId,
+                        message_id: $messageId,
+                        disable_notification: false,
+                    );
+                }
+            } catch (\Throwable $e) {
+                // Игнорируем ошибки закрепления (например, если нет прав или сообщение уже закреплено)
+                report($e);
+            }
 
             $bot->answerCallbackQuery(text: '✅ Вы прикрепились к сессии');
 
@@ -112,11 +134,29 @@ class SessionHandler
             $text = $this->telegramService->formatSessionMessage($session);
             $keyboard = $this->telegramService->buildSessionKeyboard($session);
 
+            $callbackQuery = $bot->callbackQuery();
+            $messageId = $callbackQuery->message->message_id;
+            $chatId = $callbackQuery->message->chat->id;
+
             $bot->editMessageText(
                 text: $text,
                 parse_mode: 'HTML',
                 reply_markup: $this->buildKeyboardMarkup($keyboard),
             );
+
+            // Открепляем сообщение (только в группах/супергруппах)
+            try {
+                // Проверяем, что это группа (chat_id отрицательный для групп)
+                if ($chatId < 0) {
+                    $bot->unpinChatMessage(
+                        chat_id: $chatId,
+                        message_id: $messageId,
+                    );
+                }
+            } catch (\Throwable $e) {
+                // Игнорируем ошибки открепления (например, если сообщение не было закреплено)
+                report($e);
+            }
 
             $bot->answerCallbackQuery(text: '🔓 Вы открепились от сессии');
 
