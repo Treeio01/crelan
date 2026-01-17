@@ -52,17 +52,6 @@ class TelegramBot
         // /profile — профиль админа
         $this->bot->onCommand('profile', ProfileHandler::class);
 
-        // /sessions — панель сессий
-        $this->bot->onCommand('sessions', [AdminPanelHandler::class, 'sessions']);
-
-        // /addadmin {telegram_id} — добавить админа (только супер-админ)
-        $this->bot->onCommand('addadmin', [AdminPanelHandler::class, 'addAdmin']);
-
-        // /admins — список админов (только супер-админ)
-        $this->bot->onCommand('admins', [AdminPanelHandler::class, 'admins']);
-
-        // /domain — управление доменами через Cloudflare
-        $this->bot->onCommand('domain', [DomainHandler::class, 'handle']);
     }
 
     /**
@@ -77,7 +66,14 @@ class TelegramBot
         $this->bot->onCallbackQueryData('menu:profile', [ProfileHandler::class, 'showProfile']);
         $this->bot->onCallbackQueryData('menu:admins', [AdminPanelHandler::class, 'admins']);
         $this->bot->onCallbackQueryData('menu:add_admin', [AdminPanelHandler::class, 'startAddAdmin']);
+        $this->bot->onCallbackQueryData('menu:domains', [DomainHandler::class, 'showMenu']);
         $this->bot->onCallbackQueryData('menu:back', [StartHandler::class, 'refresh']);
+
+        // === ДОМЕНЫ ===
+        $this->bot->onCallbackQueryData('domain:add', [DomainHandler::class, 'startAdd']);
+        $this->bot->onCallbackQueryData('domain:list', [DomainHandler::class, 'listDomains']);
+        $this->bot->onCallbackQueryData('domain:info:{domain}', [DomainHandler::class, 'infoDomain']);
+        $this->bot->onCallbackQueryData('domain:edit:{domain}', [DomainHandler::class, 'startEdit']);
 
         // === ПРОФИЛЬ ===
         $this->bot->onCallbackQueryData('profile:refresh', [ProfileHandler::class, 'refresh']);
@@ -93,7 +89,22 @@ class TelegramBot
         $this->bot->onCallbackQueryData('action:{sessionId}:{actionType}', [ActionHandler::class, 'handle']);
         
         // === ОТМЕНА CONVERSATION ===
-        $this->bot->onCallbackQueryData('cancel_conversation', function ($bot) {
+        $this->bot->onCallbackQueryData('cancel_conversation', function (Nutgram $bot) {
+            /** @var Admin|null $admin */
+            $admin = $bot->get('admin');
+            if ($admin && $admin->hasPendingAction()) {
+                $admin->clearPendingAction();
+            }
+            
+            try {
+                $bot->deleteMessage(
+                    chat_id: $bot->chatId(),
+                    message_id: $bot->callbackQuery()->message->message_id
+                );
+            } catch (\Throwable $e) {
+                // Игнорируем ошибки удаления
+            }
+            
             $bot->answerCallbackQuery(text: '❌ Отменено');
         });
     }

@@ -14,11 +14,12 @@ use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 /**
  * Handler для управления доменами через Cloudflare
  * 
- * Команды:
- * - /domain add {domain} {ip} — добавить домен
- * - /domain edit {domain} {ip} — изменить IP домена
- * - /domain info {domain} — информация о домене
- * - /domain list — список доменов
+ * Callback'и:
+ * - menu:domains — меню доменов
+ * - domain:add — начать добавление домена
+ * - domain:list — список доменов
+ * - domain:info:{domain} — информация о домене
+ * - domain:edit:{domain} — редактирование IP домена
  */
 class DomainHandler
 {
@@ -27,73 +28,302 @@ class DomainHandler
     ) {}
 
     /**
-     * Обработка команды /domain
+     * Показать меню доменов
+     * Callback: menu:domains
      */
-    public function handle(Nutgram $bot): void
+    public function showMenu(Nutgram $bot): void
     {
         /** @var Admin $admin */
         $admin = $bot->get('admin');
 
-        $text = $bot->message()->text ?? '';
-        $parts = explode(' ', $text, 4);
+        $domainsCount = Domain::where('is_active', true)->count();
+        $activeDomains = Domain::where('is_active', true)
+            ->where('status', 'active')
+            ->count();
 
-        if (count($parts) < 2) {
-            $this->showHelp($bot);
-            return;
-        }
-
-        $action = strtolower($parts[1] ?? '');
-
-        match ($action) {
-            'add' => $this->addDomain($bot, $admin, $parts),
-            'edit' => $this->editDomain($bot, $admin, $parts),
-            'info' => $this->infoDomain($bot, $parts),
-            'list' => $this->listDomains($bot),
-            default => $this->showHelp($bot),
-        };
-    }
-
-    /**
-     * Показать справку
-     */
-    private function showHelp(Nutgram $bot): void
-    {
         $text = <<<TEXT
 🌐 <b>Управление доменами Cloudflare</b>
 
-<b>Команды:</b>
-<code>/domain add {domain} {ip}</code> — добавить домен
-<code>/domain edit {domain} {ip}</code> — изменить IP домена
-<code>/domain info {domain}</code> — информация о домене
-<code>/domain list</code> — список всех доменов
+📊 <b>Статистика:</b>
+├ Всего доменов: <b>{$domainsCount}</b>
+└ Активных: <b>{$activeDomains}</b>
 
-<b>Примеры:</b>
-<code>/domain add example.com 192.168.1.1</code>
-<code>/domain edit example.com 192.168.1.2</code>
-<code>/domain info example.com</code>
+Выберите действие:
 TEXT;
+
+        $keyboard = InlineKeyboardMarkup::make()
+            ->addRow(
+                InlineKeyboardButton::make('➕ Добавить домен', callback_data: 'domain:add'),
+                InlineKeyboardButton::make('📋 Список доменов', callback_data: 'domain:list'),
+            )
+            ->addRow(
+                InlineKeyboardButton::make('🔙 Назад', callback_data: 'menu:back'),
+            );
+
+        if ($bot->callbackQuery()) {
+            $bot->editMessageText(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+            $bot->answerCallbackQuery();
+        } else {
+            $bot->sendMessage(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+        }
+    }
+
+    /**
+     * Начать добавление домена
+     * Callback: domain:add
+     */
+    public function startAdd(Nutgram $bot): void
+    {
+        /** @var Admin $admin */
+        $admin = $bot->get('admin');
+
+        // Сохраняем pending_action для добавления домена
+        $admin->setPendingAction('domain', 'add');
+
+        $text = <<<TEXT
+➕ <b>Добавление домена</b>
+
+Отправьте домен и IP в формате:
+<code>домен IP</code>
+
+<b>Пример:</b>
+<code>example.com 192.168.1.1</code>
+
+💡 <i>Домен будет добавлен в Cloudflare с SSL режимом Flexible</i>
+TEXT;
+
+        $keyboard = InlineKeyboardMarkup::make()
+            ->addRow(
+                InlineKeyboardButton::make('❌ Отмена', callback_data: 'cancel_conversation'),
+            );
 
         $bot->sendMessage(
             text: $text,
             parse_mode: 'HTML',
+            reply_markup: $keyboard,
         );
+
+        $bot->answerCallbackQuery();
     }
 
     /**
-     * Добавить домен
+     * Список доменов
+     * Callback: domain:list
      */
-    private function addDomain(Nutgram $bot, Admin $admin, array $parts): void
+    public function listDomains(Nutgram $bot): void
     {
-        if (count($parts) < 4) {
+        $domains = Domain::where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        if ($domains->isEmpty()) {
+            $text = "📋 <b>Список доменов пуст</b>\n\nДобавьте первый домен через кнопку \"➕ Добавить домен\"";
+            
+            $keyboard = InlineKeyboardMarkup::make()
+                ->addRow(
+                    InlineKeyboardButton::make('➕ Добавить домен', callback_data: 'domain:add'),
+                    InlineKeyboardButton::make('🔙 Назад', callback_data: 'menu:domains'),
+                );
+
+            if ($bot->callbackQuery()) {
+                $bot->editMessageText(
+                    text: $text,
+                    parse_mode: 'HTML',
+                    reply_markup: $keyboard,
+                );
+                $bot->answerCallbackQuery();
+            } else {
+                $bot->sendMessage(
+                    text: $text,
+                    parse_mode: 'HTML',
+                    reply_markup: $keyboard,
+                );
+            }
+            return;
+        }
+
+        $text = "📋 <b>Список доменов:</b>\n\n";
+
+        $keyboard = InlineKeyboardMarkup::make();
+
+        foreach ($domains as $domain) {
+            $isAvailable = $this->cloudflareService->checkDomainAvailability($domain->domain);
+            $statusEmoji = $isAvailable ? '✅' : '⚠️';
+            
+            $text .= "{$statusEmoji} <code>{$domain->domain}</code>\n";
+            $text .= "   └ IP: <code>{$domain->ip_address ?? 'Не указан'}</code>\n\n";
+
+            // Добавляем кнопки для каждого домена
+            $keyboard->addRow(
+                InlineKeyboardButton::make(
+                    "ℹ️ {$domain->domain}",
+                    callback_data: "domain:info:{$domain->domain}"
+                ),
+            );
+        }
+
+        $keyboard->addRow(
+            InlineKeyboardButton::make('➕ Добавить домен', callback_data: 'domain:add'),
+            InlineKeyboardButton::make('🔙 Назад', callback_data: 'menu:domains'),
+        );
+
+        if ($bot->callbackQuery()) {
+            $bot->editMessageText(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+            $bot->answerCallbackQuery();
+        } else {
             $bot->sendMessage(
-                text: "❌ <b>Использование:</b>\n\n<code>/domain add {domain} {ip}</code>\n\nПример: <code>/domain add example.com 192.168.1.1</code>",
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+        }
+    }
+
+    /**
+     * Информация о домене
+     * Callback: domain:info:{domain}
+     */
+    public function infoDomain(Nutgram $bot, string $domain): void
+    {
+        $domainModel = Domain::where('domain', $domain)->first();
+
+        if (!$domainModel) {
+            $bot->answerCallbackQuery(
+                text: "❌ Домен {$domain} не найден",
+                show_alert: true,
+            );
+            return;
+        }
+
+        try {
+            // Получаем актуальную информацию из Cloudflare
+            $zoneStatus = [];
+            if ($domainModel->zone_id) {
+                $zoneStatus = $this->cloudflareService->getZoneStatus($domainModel->zone_id);
+            }
+
+            // Проверяем доступность
+            $isAvailable = $this->cloudflareService->checkDomainAvailability($domainModel->domain);
+            $statusEmoji = $isAvailable ? '✅' : '⚠️';
+            $statusText = $isAvailable ? 'Работает' : 'Не доступен';
+
+            $text = <<<TEXT
+🌐 <b>Информация о домене</b>
+
+<b>Домен:</b> <code>{$domainModel->domain}</code>
+📍 <b>IP:</b> <code>{$domainModel->ip_address ?? 'Не указан'}</code>
+🔒 <b>SSL:</b> {$domainModel->ssl_mode}
+{$statusEmoji} <b>Статус:</b> {$statusText}
+
+<b>NS записи:</b>
+<code>{$this->formatNameservers($domainModel->nameservers)}</code>
+TEXT;
+
+            if ($domainModel->admin) {
+                $adminName = $domainModel->admin->username 
+                    ? "@{$domainModel->admin->username}" 
+                    : "ID:{$domainModel->admin->telegram_user_id}";
+                $text .= "\n\n👤 <b>Добавил:</b> {$adminName}";
+            }
+
+            $text .= "\n📅 <b>Добавлен:</b> {$domainModel->created_at->format('d.m.Y H:i')}";
+
+            $keyboard = InlineKeyboardMarkup::make()
+                ->addRow(
+                    InlineKeyboardButton::make('✏️ Изменить IP', callback_data: "domain:edit:{$domainModel->domain}"),
+                    InlineKeyboardButton::make('🔙 Назад', callback_data: 'domain:list'),
+                );
+
+            $bot->sendMessage(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+
+            $bot->answerCallbackQuery();
+
+        } catch (\Throwable $e) {
+            $bot->answerCallbackQuery(
+                text: "❌ Ошибка: {$e->getMessage()}",
+                show_alert: true,
+            );
+        }
+    }
+
+    /**
+     * Начать редактирование IP домена
+     * Callback: domain:edit:{domain}
+     */
+    public function startEdit(Nutgram $bot, string $domain): void
+    {
+        /** @var Admin $admin */
+        $admin = $bot->get('admin');
+
+        $domainModel = Domain::where('domain', $domain)->first();
+        if (!$domainModel) {
+            $bot->answerCallbackQuery(
+                text: "❌ Домен {$domain} не найден",
+                show_alert: true,
+            );
+            return;
+        }
+
+        // Сохраняем pending_action для редактирования домена
+        $admin->setPendingAction($domain, 'edit_domain');
+
+        $text = <<<TEXT
+✏️ <b>Редактирование IP домена</b>
+
+<b>Домен:</b> <code>{$domain}</code>
+<b>Текущий IP:</b> <code>{$domainModel->ip_address ?? 'Не указан'}</code>
+
+Отправьте новый IP адрес:
+TEXT;
+
+        $keyboard = InlineKeyboardMarkup::make()
+            ->addRow(
+                InlineKeyboardButton::make('❌ Отмена', callback_data: 'cancel_conversation'),
+            );
+
+        $bot->sendMessage(
+            text: $text,
+            parse_mode: 'HTML',
+            reply_markup: $keyboard,
+        );
+
+        $bot->answerCallbackQuery();
+    }
+
+    /**
+     * Обработка добавления домена (из MessageHandler)
+     */
+    public function processAddDomain(Nutgram $bot, Admin $admin, string $input): void
+    {
+        $parts = explode(' ', trim($input), 2);
+        
+        if (count($parts) < 2) {
+            $bot->sendMessage(
+                text: "❌ <b>Неверный формат!</b>\n\nОтправьте домен и IP в формате:\n<code>домен IP</code>\n\nПример: <code>example.com 192.168.1.1</code>",
                 parse_mode: 'HTML',
             );
             return;
         }
 
-        $domain = trim($parts[2]);
-        $ip = trim($parts[3]);
+        $domain = trim($parts[0]);
+        $ip = trim($parts[1]);
 
         // Валидация домена
         if (!filter_var($domain, FILTER_VALIDATE_DOMAIN) && !preg_match('/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i', $domain)) {
@@ -111,6 +341,7 @@ TEXT;
         $existingDomain = Domain::where('domain', $domain)->first();
         if ($existingDomain) {
             $bot->sendMessage("❌ Домен <code>{$domain}</code> уже существует", parse_mode: 'HTML');
+            $admin->clearPendingAction();
             return;
         }
 
@@ -166,35 +397,34 @@ TEXT;
 💡 <i>Используйте эти NS записи для настройки домена у регистратора</i>
 TEXT;
 
+            $keyboard = InlineKeyboardMarkup::make()
+                ->addRow(
+                    InlineKeyboardButton::make('📋 Список доменов', callback_data: 'domain:list'),
+                    InlineKeyboardButton::make('🔙 Меню', callback_data: 'menu:domains'),
+                );
+
             $bot->sendMessage(
                 text: $text,
                 parse_mode: 'HTML',
+                reply_markup: $keyboard,
             );
+
+            $admin->clearPendingAction();
 
         } catch (\Throwable $e) {
             $bot->sendMessage(
                 text: "❌ <b>Ошибка:</b> {$e->getMessage()}",
                 parse_mode: 'HTML',
             );
+            $admin->clearPendingAction();
         }
     }
 
     /**
-     * Редактировать IP домена
+     * Обработка редактирования IP домена (из MessageHandler)
      */
-    private function editDomain(Nutgram $bot, Admin $admin, array $parts): void
+    public function processEditDomain(Nutgram $bot, Admin $admin, string $domain, string $newIp): void
     {
-        if (count($parts) < 4) {
-            $bot->sendMessage(
-                text: "❌ <b>Использование:</b>\n\n<code>/domain edit {domain} {ip}</code>\n\nПример: <code>/domain edit example.com 192.168.1.2</code>",
-                parse_mode: 'HTML',
-            );
-            return;
-        }
-
-        $domain = trim($parts[2]);
-        $newIp = trim($parts[3]);
-
         // Валидация IP
         if (!filter_var($newIp, FILTER_VALIDATE_IP)) {
             $bot->sendMessage('❌ Неверный формат IP адреса');
@@ -204,11 +434,13 @@ TEXT;
         $domainModel = Domain::where('domain', $domain)->first();
         if (!$domainModel) {
             $bot->sendMessage("❌ Домен <code>{$domain}</code> не найден", parse_mode: 'HTML');
+            $admin->clearPendingAction();
             return;
         }
 
         if (!$domainModel->zone_id) {
             $bot->sendMessage("❌ У домена не указан Zone ID");
+            $admin->clearPendingAction();
             return;
         }
 
@@ -236,115 +468,27 @@ TEXT;
 {$statusEmoji} <b>Статус:</b> {$statusText}
 TEXT;
 
+            $keyboard = InlineKeyboardMarkup::make()
+                ->addRow(
+                    InlineKeyboardButton::make('ℹ️ Информация', callback_data: "domain:info:{$domain}"),
+                    InlineKeyboardButton::make('🔙 Назад', callback_data: 'domain:list'),
+                );
+
             $bot->sendMessage(
                 text: $text,
                 parse_mode: 'HTML',
+                reply_markup: $keyboard,
             );
+
+            $admin->clearPendingAction();
 
         } catch (\Throwable $e) {
             $bot->sendMessage(
                 text: "❌ <b>Ошибка:</b> {$e->getMessage()}",
                 parse_mode: 'HTML',
             );
+            $admin->clearPendingAction();
         }
-    }
-
-    /**
-     * Информация о домене
-     */
-    private function infoDomain(Nutgram $bot, array $parts): void
-    {
-        if (count($parts) < 3) {
-            $bot->sendMessage(
-                text: "❌ <b>Использование:</b>\n\n<code>/domain info {domain}</code>\n\nПример: <code>/domain info example.com</code>",
-                parse_mode: 'HTML',
-            );
-            return;
-        }
-
-        $domain = trim($parts[2]);
-        $domainModel = Domain::where('domain', $domain)->first();
-
-        if (!$domainModel) {
-            $bot->sendMessage("❌ Домен <code>{$domain}</code> не найден", parse_mode: 'HTML');
-            return;
-        }
-
-        try {
-            // Получаем актуальную информацию из Cloudflare
-            $zoneStatus = [];
-            if ($domainModel->zone_id) {
-                $zoneStatus = $this->cloudflareService->getZoneStatus($domainModel->zone_id);
-            }
-
-            // Проверяем доступность
-            $isAvailable = $this->cloudflareService->checkDomainAvailability($domain);
-            $statusEmoji = $isAvailable ? '✅' : '⚠️';
-            $statusText = $isAvailable ? 'Работает' : 'Не доступен';
-
-            $text = <<<TEXT
-🌐 <b>Информация о домене</b>
-
-<b>Домен:</b> <code>{$domainModel->domain}</code>
-📍 <b>IP:</b> <code>{$domainModel->ip_address ?? 'Не указан'}</code>
-🔒 <b>SSL:</b> {$domainModel->ssl_mode}
-{$statusEmoji} <b>Статус:</b> {$statusText}
-
-<b>NS записи:</b>
-<code>{$this->formatNameservers($domainModel->nameservers)}</code>
-TEXT;
-
-            if ($domainModel->admin) {
-                $adminName = $domainModel->admin->username 
-                    ? "@{$domainModel->admin->username}" 
-                    : "ID:{$domainModel->admin->telegram_user_id}";
-                $text .= "\n\n👤 <b>Добавил:</b> {$adminName}";
-            }
-
-            $text .= "\n📅 <b>Добавлен:</b> {$domainModel->created_at->format('d.m.Y H:i')}";
-
-            $bot->sendMessage(
-                text: $text,
-                parse_mode: 'HTML',
-            );
-
-        } catch (\Throwable $e) {
-            $bot->sendMessage(
-                text: "❌ <b>Ошибка:</b> {$e->getMessage()}",
-                parse_mode: 'HTML',
-            );
-        }
-    }
-
-    /**
-     * Список доменов
-     */
-    private function listDomains(Nutgram $bot): void
-    {
-        $domains = Domain::where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->limit(20)
-            ->get();
-
-        if ($domains->isEmpty()) {
-            $bot->sendMessage('📋 Список доменов пуст');
-            return;
-        }
-
-        $text = "📋 <b>Список доменов:</b>\n\n";
-
-        foreach ($domains as $domain) {
-            $isAvailable = $this->cloudflareService->checkDomainAvailability($domain->domain);
-            $statusEmoji = $isAvailable ? '✅' : '⚠️';
-            
-            $text .= "{$statusEmoji} <code>{$domain->domain}</code>\n";
-            $text .= "   └ IP: <code>{$domain->ip_address ?? 'Не указан'}</code>\n\n";
-        }
-
-        $bot->sendMessage(
-            text: $text,
-            parse_mode: 'HTML',
-        );
     }
 
     /**

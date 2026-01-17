@@ -74,7 +74,7 @@ TEXT;
         if ($admin->canAddAdmins()) {
             $keyboard->addRow(
                 InlineKeyboardButton::make('👥 Админы', callback_data: 'menu:admins'),
-                InlineKeyboardButton::make('➕ Добавить админа', callback_data: 'menu:add_admin'),
+                InlineKeyboardButton::make('🌐 Домены', callback_data: 'menu:domains'),
             );
         }
 
@@ -132,7 +132,7 @@ TEXT;
         if ($admin->canAddAdmins()) {
             $keyboard->addRow(
                 InlineKeyboardButton::make('👥 Админы', callback_data: 'menu:admins'),
-                InlineKeyboardButton::make('➕ Добавить админа', callback_data: 'menu:add_admin'),
+                InlineKeyboardButton::make('🌐 Домены', callback_data: 'menu:domains'),
             );
         }
 

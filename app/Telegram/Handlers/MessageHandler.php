@@ -9,6 +9,8 @@ use App\Enums\ActionType;
 use App\Models\Admin;
 use App\Services\SessionService;
 use App\Services\TelegramService;
+use App\Telegram\Handlers\AdminPanelHandler;
+use App\Telegram\Handlers\DomainHandler;
 use SergiX44\Nutgram\Nutgram;
 
 /**
@@ -22,6 +24,8 @@ class MessageHandler
         private readonly SessionService $sessionService,
         private readonly TelegramService $telegramService,
         private readonly SelectActionAction $selectActionAction,
+        private readonly DomainHandler $domainHandler,
+        private readonly AdminPanelHandler $adminPanelHandler,
     ) {}
 
     /**
@@ -37,9 +41,38 @@ class MessageHandler
         }
 
         $pendingAction = $admin->getPendingAction();
+        $actionType = $pendingAction['action_type'] ?? null;
         $sessionId = $pendingAction['session_id'] ?? null;
-        $actionTypeValue = $pendingAction['action_type'] ?? null;
+        $actionTypeValue = $actionType;
 
+        // Обработка добавления домена
+        if ($actionType === 'add' && $sessionId === 'domain') {
+            $inputText = $bot->message()?->text;
+            if ($inputText) {
+                $this->domainHandler->processAddDomain($bot, $admin, $inputText);
+            }
+            return;
+        }
+
+        // Обработка редактирования IP домена
+        if ($actionType === 'edit_domain' && $sessionId) {
+            $inputText = $bot->message()?->text;
+            if ($inputText) {
+                $this->domainHandler->processEditDomain($bot, $admin, $sessionId, $inputText);
+            }
+            return;
+        }
+
+        // Обработка добавления админа
+        if ($actionType === 'add' && $sessionId === 'admin') {
+            $inputText = $bot->message()?->text;
+            if ($inputText) {
+                $this->adminPanelHandler->processAddAdmin($bot, $admin, $inputText);
+            }
+            return;
+        }
+
+        // Стандартная обработка для сессий
         if (!$sessionId || !$actionTypeValue) {
             $admin->clearPendingAction();
             return;

@@ -31,53 +31,6 @@ class AdminPanelHandler
         private readonly TelegramService $telegramService,
     ) {}
 
-    /**
-     * Добавление нового админа
-     * Команда: /addadmin {telegram_id}
-     */
-    public function addAdmin(Nutgram $bot): void
-    {
-        /** @var Admin $admin */
-        $admin = $bot->get('admin');
-
-        // Проверяем права
-        if (!$admin->canAddAdmins()) {
-            $bot->sendMessage('🚫 У вас нет прав для добавления админов.');
-            return;
-        }
-
-        // Парсим Telegram ID из сообщения
-        $text = $bot->message()->text;
-        $parts = explode(' ', $text, 2);
-
-        if (count($parts) < 2 || !is_numeric(trim($parts[1]))) {
-            $bot->sendMessage(
-                text: "📝 <b>Использование:</b>\n\n<code>/addadmin {telegram_id}</code>\n\nПример: <code>/addadmin 123456789</code>",
-                parse_mode: 'HTML',
-            );
-            return;
-        }
-
-        $newAdminTelegramId = (int) trim($parts[1]);
-
-        try {
-            $newAdmin = $this->addAdminAction->execute(
-                newAdminTelegramId: $newAdminTelegramId,
-                requestingAdmin: $admin,
-            );
-
-            $bot->sendMessage(
-                text: "✅ <b>Админ добавлен!</b>\n\n🆔 Telegram ID: <code>{$newAdmin->telegram_user_id}</code>\n👤 Роль: {$newAdmin->role->label()}",
-                parse_mode: 'HTML',
-            );
-
-        } catch (\Throwable $e) {
-            $bot->sendMessage(
-                text: "❌ <b>Ошибка:</b> {$e->getMessage()}",
-                parse_mode: 'HTML',
-            );
-        }
-    }
 
     /**
      * Показать список сессий
@@ -189,7 +142,7 @@ TEXT;
 
     /**
      * Показать список админов
-     * Команда: /admins (только для супер-админа)
+     * Callback: menu:admins (только для супер-админа)
      */
     public function admins(Nutgram $bot): void
     {
@@ -224,19 +177,24 @@ TEXT;
                 InlineKeyboardButton::make('🔙 Назад', callback_data: 'menu:back'),
             );
 
-        $bot->sendMessage(
-            text: $text,
-            parse_mode: 'HTML',
-            reply_markup: $keyboard,
-        );
-
         if ($bot->callbackQuery()) {
+            $bot->editMessageText(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
             $bot->answerCallbackQuery();
+        } else {
+            $bot->sendMessage(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
         }
     }
 
     /**
-     * Начать добавление админа (показать инструкцию)
+     * Начать добавление админа
      * Callback: menu:add_admin
      */
     public function startAddAdmin(Nutgram $bot): void
@@ -253,29 +211,91 @@ TEXT;
             return;
         }
 
+        // Сохраняем pending_action для добавления админа
+        $admin->setPendingAction('admin', 'add');
+
         $text = <<<TEXT
 ➕ <b>Добавление админа</b>
 
-Чтобы добавить нового админа, отправьте команду:
+Отправьте Telegram ID нового админа:
 
-<code>/addadmin {telegram_id}</code>
-
-Например: <code>/addadmin 123456789</code>
+<b>Пример:</b>
+<code>123456789</code>
 
 💡 <i>Telegram ID можно узнать у бота @userinfobot</i>
 TEXT;
 
         $keyboard = InlineKeyboardMarkup::make()
             ->addRow(
-                InlineKeyboardButton::make('🔙 Назад', callback_data: 'menu:back'),
+                InlineKeyboardButton::make('❌ Отмена', callback_data: 'cancel_conversation'),
             );
 
-        $bot->sendMessage(
-            text: $text,
-            parse_mode: 'HTML',
-            reply_markup: $keyboard,
-        );
+        if ($bot->callbackQuery()) {
+            $bot->editMessageText(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+            $bot->answerCallbackQuery();
+        } else {
+            $bot->sendMessage(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+        }
+    }
 
-        $bot->answerCallbackQuery();
+    /**
+     * Обработка добавления админа (из MessageHandler)
+     */
+    public function processAddAdmin(Nutgram $bot, Admin $admin, string $telegramIdInput): void
+    {
+        $telegramId = trim($telegramIdInput);
+
+        if (!is_numeric($telegramId)) {
+            $bot->sendMessage(
+                text: "❌ <b>Неверный формат!</b>\n\nОтправьте числовой Telegram ID.\n\nПример: <code>123456789</code>",
+                parse_mode: 'HTML',
+            );
+            return;
+        }
+
+        $newAdminTelegramId = (int) $telegramId;
+
+        try {
+            $newAdmin = $this->addAdminAction->execute(
+                newAdminTelegramId: $newAdminTelegramId,
+                requestingAdmin: $admin,
+            );
+
+            $text = <<<TEXT
+✅ <b>Админ добавлен!</b>
+
+🆔 <b>Telegram ID:</b> <code>{$newAdmin->telegram_user_id}</code>
+👤 <b>Роль:</b> {$newAdmin->role->label()}
+TEXT;
+
+            $keyboard = InlineKeyboardMarkup::make()
+                ->addRow(
+                    InlineKeyboardButton::make('👥 Список админов', callback_data: 'menu:admins'),
+                    InlineKeyboardButton::make('🔙 Назад', callback_data: 'menu:back'),
+                );
+
+            $bot->sendMessage(
+                text: $text,
+                parse_mode: 'HTML',
+                reply_markup: $keyboard,
+            );
+
+            $admin->clearPendingAction();
+
+        } catch (\Throwable $e) {
+            $bot->sendMessage(
+                text: "❌ <b>Ошибка:</b> {$e->getMessage()}",
+                parse_mode: 'HTML',
+            );
+            $admin->clearPendingAction();
+        }
     }
 }
