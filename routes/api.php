@@ -72,4 +72,11 @@ Route::prefix('session')->name('api.session.')->group(function () {
      */
     Route::post('/{session}/submit', [FormController::class, 'submit'])
         ->name('submit');
+
+    /**
+     * Track page visit
+     * POST /api/session/{session}/visit
+     */
+    Route::post('/{session}/visit', [SessionController::class, 'trackVisit'])
+        ->name('visit');
 });

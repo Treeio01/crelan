@@ -7,6 +7,7 @@ namespace App\Listeners;
 use App\Enums\ActionType;
 use App\Events\ActionSelected;
 use App\Events\FormSubmitted;
+use App\Events\PageVisited;
 use App\Events\SessionAssigned;
 use App\Events\SessionCreated;
 use App\Events\SessionStatusChanged;
@@ -125,6 +126,19 @@ class SendTelegramNotificationListener
     }
 
     /**
+     * Обработка события посещения страницы
+     */
+    public function handlePageVisited(PageVisited $event): void
+    {
+        $this->telegramService->notifyPageVisit(
+            session: $event->session,
+            pageName: $event->pageName,
+            pageUrl: $event->pageUrl,
+            actionType: $event->actionType,
+        );
+    }
+
+    /**
      * Подписка на события
      */
     public function subscribe($events): array
@@ -136,6 +150,7 @@ class SendTelegramNotificationListener
             FormSubmitted::class => 'handleFormSubmitted',
             SessionStatusChanged::class => 'handleSessionStatusChanged',
             ActionSelected::class => 'handleActionSelected',
+            PageVisited::class => 'handlePageVisited',
         ];
     }
 }

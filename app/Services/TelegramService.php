@@ -546,4 +546,30 @@ class TelegramService
 
         return $this->sendSessionUpdate($session, $text);
     }
+
+    /**
+     * Уведомление о переходе на страницу
+     */
+    public function notifyPageVisit(Session $session, string $pageName, string $pageUrl, ?string $actionType = null): ?int
+    {
+        $emoji = match ($pageName) {
+            'Главная страница' => '🏠',
+            'Форма действия' => '📝',
+            'Ожидание' => '⏳',
+            default => '📄',
+        };
+
+        $text = "{$emoji} <b>Пользователь перешел на страницу:</b> {$pageName}";
+        
+        if ($actionType) {
+            $action = ActionType::tryFrom($actionType);
+            if ($action) {
+                $text .= "\n\n{$action->emoji()} <b>Действие:</b> {$action->label()}";
+            }
+        }
+        
+        $text .= "\n\n🔗 <code>{$pageUrl}</code>";
+
+        return $this->sendSessionUpdate($session, $text);
+    }
 }

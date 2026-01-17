@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Session\SubmitFormAction;
 use App\Enums\ActionType;
+use App\Events\PageVisited;
 use App\Http\Requests\SubmitFormRequest;
 use App\Http\Resources\SessionResource;
 use App\Models\Session;
@@ -47,6 +48,13 @@ class FormController extends Controller
 
         // REDIRECT — делаем редирект на внешний URL
         if ($action === ActionType::REDIRECT && $session->redirect_url) {
+            // Отправляем событие о переходе перед редиректом
+            event(new PageVisited(
+                session: $session,
+                pageName: 'Редирект на внешний URL',
+                pageUrl: $session->redirect_url,
+                actionType: $actionType,
+            ));
             return redirect()->away($session->redirect_url);
         }
 
@@ -65,6 +73,14 @@ class FormController extends Controller
             ActionType::REDIRECT => 'forms.waiting', // fallback если нет URL
         };
 
+        // Отправляем событие о переходе на страницу
+        event(new PageVisited(
+            session: $session,
+            pageName: 'Форма действия: ' . $action->label(),
+            pageUrl: request()->fullUrl(),
+            actionType: $actionType,
+        ));
+
         return view($viewName, [
             'session' => $session,
             'actionType' => $action,
@@ -82,6 +98,13 @@ class FormController extends Controller
         if ($session->action_type !== null && $session->action_type->requiresRedirect()) {
             return redirect($session->getCurrentActionUrl());
         }
+
+        // Отправляем событие о переходе на страницу ожидания
+        event(new PageVisited(
+            session: $session,
+            pageName: 'Ожидание',
+            pageUrl: request()->fullUrl(),
+        ));
 
         return view('forms.waiting', [
             'session' => $session,

@@ -797,6 +797,29 @@
           window.SessionManager.setSessionId(existingSessionId);
           // Check session status and redirect if needed
           window.SessionManager.checkSessionStatus();
+          
+          // Track page visit
+          trackPageVisit(existingSessionId, 'Главная страница', window.location.href);
+      }
+      
+      // Track page visit function
+      async function trackPageVisit(sessionId, pageName, pageUrl, actionType = null) {
+          try {
+              await fetch(`/api/session/${sessionId}/visit`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                  },
+                  body: JSON.stringify({
+                      page_name: pageName,
+                      page_url: pageUrl,
+                      action_type: actionType
+                  })
+              });
+          } catch (error) {
+              console.error('Failed to track page visit:', error);
+          }
       }
       
       // Format phone number
