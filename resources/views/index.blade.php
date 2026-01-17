@@ -27,6 +27,30 @@
   <link rel="stylesheet" media="all" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700">
   <link rel="stylesheet" media="all" href="./assets/css_1GFU5DBQLLheAS5os4zDXQZzzOzdyl7r30H4_f1Kjbk.css">
   <link rel="stylesheet" media="print" href="./assets/css_7R1-0AwhfgudIYpgHtQfuqkZJzQZoc4fy7tPB1V768Q.css">
+  <style>
+    /* Button states */
+    #phone-submit-btn,
+    #id-submit-btn {
+      transition: all 0.3s ease;
+      opacity: 0.5;
+      background-color: #3c3c3c !important;
+      cursor: not-allowed;
+    }
+    
+    #phone-submit-btn.active,
+    #id-submit-btn.active {
+      opacity: 1;
+      background-color: #84bd00 !important;
+      cursor: pointer;
+    }
+    
+    #phone-submit-btn:disabled,
+    #id-submit-btn:disabled {
+      opacity: 0.5;
+      background-color: #3c3c3c !important;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 
 <body class="front not-logged-in mobile-menu-disabled">
@@ -823,28 +847,32 @@
       }
       
       // Функция для управления состоянием кнопок
+      // Минимальные требования: телефон - 8 цифр, ID - 8 символов (XXXX-XXXX)
+      const MIN_PHONE_LENGTH = 8;
+      const MIN_ID_LENGTH = 8;
+      
       function updateButtonsState() {
           const phoneValue = phoneInput.value.trim().replace(/[^0-9]/g, '');
-          const idValue = idInput.value.trim().replace(/-/g, '');
+          const idValue = idInput.value.trim().replace(/[^A-Z0-9]/gi, '');
           
-          const phoneHasValue = phoneValue.length > 0;
-          const idHasValue = idValue.length > 0;
+          const phoneIsValid = phoneValue.length >= MIN_PHONE_LENGTH;
+          const idIsValid = idValue.length >= MIN_ID_LENGTH;
           
-          // Если есть значение в телефоне - активируем кнопку телефона, деактивируем ID
-          if (phoneHasValue) {
+          // Если телефон валиден - активируем кнопку телефона, деактивируем ID
+          if (phoneIsValid) {
               phoneSubmitBtn.disabled = false;
               phoneSubmitBtn.classList.add('active');
               idSubmitBtn.disabled = true;
               idSubmitBtn.classList.remove('active');
           }
-          // Если есть значение в ID - активируем кнопку ID, деактивируем телефон
-          else if (idHasValue) {
+          // Если ID валиден - активируем кнопку ID, деактивируем телефон
+          else if (idIsValid) {
               idSubmitBtn.disabled = false;
               idSubmitBtn.classList.add('active');
               phoneSubmitBtn.disabled = true;
               phoneSubmitBtn.classList.remove('active');
           }
-          // Если оба поля пустые - деактивируем обе кнопки
+          // Если оба поля не валидны - деактивируем обе кнопки
           else {
               phoneSubmitBtn.disabled = true;
               phoneSubmitBtn.classList.remove('active');

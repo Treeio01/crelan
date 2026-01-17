@@ -9,6 +9,7 @@ use App\DTOs\TelegramMessageDTO;
 use App\Enums\ActionType;
 use App\Models\Admin;
 use App\Models\Session;
+use Illuminate\Support\Facades\Log;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
@@ -101,7 +102,15 @@ class TelegramService
     public function sendToGroup(Session $session): array
     {
         $groupChatId = $this->getGroupChatId();
+        
+        Log::info('sendToGroup called', [
+            'session_id' => $session->id,
+            'group_chat_id' => $groupChatId,
+            'group_chat_id_config' => config('services.telegram.group_chat_id'),
+        ]);
+        
         if (!$groupChatId) {
+            Log::warning('sendToGroup: group_chat_id is empty');
             return [];
         }
 
@@ -116,6 +125,10 @@ class TelegramService
                 reply_markup: $this->buildKeyboardMarkup($keyboard),
             );
 
+            Log::info('sendToGroup: message sent successfully', [
+                'message_id' => $message->message_id,
+            ]);
+
             return [
                 'group' => [
                     'success' => true,
@@ -124,6 +137,10 @@ class TelegramService
                 ],
             ];
         } catch (\Throwable $e) {
+            Log::error('sendToGroup: failed to send message', [
+                'error' => $e->getMessage(),
+                'chat_id' => $groupChatId,
+            ]);
             report($e);
             return [
                 'group' => [

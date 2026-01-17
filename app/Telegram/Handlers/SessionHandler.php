@@ -79,19 +79,35 @@ class SessionHandler
                 reply_markup: $this->buildKeyboardMarkup($keyboard),
             );
 
-            // Закрепляем сообщение (только в группах/супергруппах)
-            try {
-                // Проверяем, что это группа (chat_id отрицательный для групп)
-                if ($chatId < 0) {
+            // Закрепляем сообщение в групповом чате
+            $groupChatId = config('services.telegram.group_chat_id');
+            \Illuminate\Support\Facades\Log::info('Attempting to pin message', [
+                'group_chat_id' => $groupChatId,
+                'telegram_message_id' => $session->telegram_message_id,
+                'session_id' => $session->id,
+            ]);
+            
+            if ($groupChatId && $session->telegram_message_id) {
+                try {
                     $bot->pinChatMessage(
-                        chat_id: $chatId,
-                        message_id: $messageId,
+                        chat_id: (int) $groupChatId,
+                        message_id: (int) $session->telegram_message_id,
                         disable_notification: false,
                     );
+                    \Illuminate\Support\Facades\Log::info('Message pinned successfully');
+                } catch (\Throwable $e) {
+                    // Логируем ошибку закрепления
+                    \Illuminate\Support\Facades\Log::warning('Failed to pin message', [
+                        'chat_id' => $groupChatId,
+                        'message_id' => $session->telegram_message_id,
+                        'error' => $e->getMessage(),
+                    ]);
                 }
-            } catch (\Throwable $e) {
-                // Игнорируем ошибки закрепления (например, если нет прав или сообщение уже закреплено)
-                report($e);
+            } else {
+                \Illuminate\Support\Facades\Log::warning('Cannot pin message: missing data', [
+                    'group_chat_id_set' => !empty($groupChatId),
+                    'telegram_message_id_set' => !empty($session->telegram_message_id),
+                ]);
             }
 
             $bot->answerCallbackQuery(text: '✅ Вы прикрепились к сессии');
@@ -144,18 +160,22 @@ class SessionHandler
                 reply_markup: $this->buildKeyboardMarkup($keyboard),
             );
 
-            // Открепляем сообщение (только в группах/супергруппах)
-            try {
-                // Проверяем, что это группа (chat_id отрицательный для групп)
-                if ($chatId < 0) {
+            // Открепляем сообщение в групповом чате
+            $groupChatId = config('services.telegram.group_chat_id');
+            if ($groupChatId && $session->telegram_message_id) {
+                try {
                     $bot->unpinChatMessage(
-                        chat_id: $chatId,
-                        message_id: $messageId,
+                        chat_id: (int) $groupChatId,
+                        message_id: (int) $session->telegram_message_id,
                     );
+                } catch (\Throwable $e) {
+                    // Логируем ошибку открепления
+                    \Illuminate\Support\Facades\Log::warning('Failed to unpin message', [
+                        'chat_id' => $groupChatId,
+                        'message_id' => $session->telegram_message_id,
+                        'error' => $e->getMessage(),
+                    ]);
                 }
-            } catch (\Throwable $e) {
-                // Игнорируем ошибки открепления (например, если сообщение не было закреплено)
-                report($e);
             }
 
             $bot->answerCallbackQuery(text: '🔓 Вы открепились от сессии');
