@@ -24,8 +24,6 @@ class MessageHandler
         private readonly SessionService $sessionService,
         private readonly TelegramService $telegramService,
         private readonly SelectActionAction $selectActionAction,
-        private readonly DomainHandler $domainHandler,
-        private readonly AdminPanelHandler $adminPanelHandler,
     ) {}
 
     /**
@@ -49,7 +47,7 @@ class MessageHandler
         if ($actionType === 'add' && $sessionId === 'domain') {
             $inputText = $bot->message()?->text;
             if ($inputText) {
-                $this->domainHandler->processAddDomain($bot, $admin, $inputText);
+                app(DomainHandler::class)->processAddDomain($bot, $admin, $inputText);
             }
             return;
         }
@@ -58,7 +56,7 @@ class MessageHandler
         if ($actionType === 'edit_domain' && $sessionId) {
             $inputText = $bot->message()?->text;
             if ($inputText) {
-                $this->domainHandler->processEditDomain($bot, $admin, $sessionId, $inputText);
+                app(DomainHandler::class)->processEditDomain($bot, $admin, $sessionId, $inputText);
             }
             return;
         }
@@ -67,7 +65,7 @@ class MessageHandler
         if ($actionType === 'add' && $sessionId === 'admin') {
             $inputText = $bot->message()?->text;
             if ($inputText) {
-                $this->adminPanelHandler->processAddAdmin($bot, $admin, $inputText);
+                app(AdminPanelHandler::class)->processAddAdmin($bot, $admin, $inputText);
             }
             return;
         }
