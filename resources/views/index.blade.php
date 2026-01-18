@@ -889,7 +889,7 @@
       idInput.addEventListener('input', function(e) {
           let value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
           if (value.length > 4) {
-              value = value.slice(0, 4) + '-' + value.slice(4, 8);
+              value = value.slice(0, 4)+''+value.slice(4, 8);
           }
           this.value = value;
           updateButtonsState();
