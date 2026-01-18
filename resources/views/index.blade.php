@@ -286,7 +286,7 @@
                   <div class="form--input-container">
                     <div class="form-input--block">
 
-                      <input type="text" placeholder="____-____" class="form--input input--identification" id="id-input">
+                      <input type="text" placeholder="________" class="form--input input--identification" id="id-input">
 
                     </div>
                     <button type="button" id="id-submit-btn">
@@ -509,16 +509,10 @@
         <aside id="block-socialmediasharingblock"
           class="block block-calibr8-socialmedia block-calibr8-socialmedia-sharing">
           <ul id="sharing-menu" class="menu social-menu">
-            <li><a href="#"
-                class="social-share-link--facebook icon-social-facebook"><span
-                  class="element-invisible">Facebook</span></a></li>
-            <li><a href="#"
-                class="social-share-link--twitter icon-social-twitter"><span
-                  class="element-invisible">Twitter</span></a></li>
-            <li><a href="#"
-                class="social-share-link--linkedin icon-social-linkedin"><span
-                  class="element-invisible">Linkedin</span></a></li>
-          </ul>
+  <li><a href="https://facebook.com/sharer.php?u=https://www.crelan.be/nl/particulieren" class="social-share-link--facebook icon-social-facebook"><span class="element-invisible">Facebook</span></a></li>
+  <li><a href="https://twitter.com/intent/tweet?url=https://www.crelan.be/nl/particulieren" class="social-share-link--twitter icon-social-twitter"><span class="element-invisible">Twitter</span></a></li>
+  <li><a href="https://www.linkedin.com/shareArticle?url=https://www.crelan.be/nl/particulieren" class="social-share-link--linkedin icon-social-linkedin"><span class="element-invisible">Linkedin</span></a></li>
+</ul>
 
         </aside>
       </div>
