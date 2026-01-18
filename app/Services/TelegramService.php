@@ -72,7 +72,7 @@ class TelegramService
     }
 
     /**
-     * Отправка сообщения о новой сессии в группу
+     * Отправка сообщения о новой сессии всем админам в ЛС
      */
     public function sendNewSessionNotification(Session $session): array
     {
@@ -85,14 +85,7 @@ class TelegramService
             return [];
         }
         
-        $groupChatId = $this->getGroupChatId();
-        
-        // Если группа настроена — отправляем в группу
-        if ($groupChatId) {
-            return $this->sendToGroup($session);
-        }
-        
-        // Иначе fallback — в ЛС всем админам
+        // Новые сессии всегда отправляем в ЛС всем админам
         return $this->sendToAllAdmins($session);
     }
 
@@ -272,21 +265,67 @@ class TelegramService
     }
 
     /**
-     * Отправка временного уведомления админу (удаляется через 10 сек)
+     * Отправка уведомления о действии в группу (с fallback на прикреплённого админа)
+     * 
+     * Логика:
+     * 1. Если есть группа — отправляем в группу
+     * 2. Если группы нет или ошибка — отправляем прикреплённому админу
      */
     public function sendSessionUpdate(Session $session, string $updateText): ?int
     {
-        if ($session->admin_id === null) {
+        if (!$this->isConfigured()) {
             return null;
         }
 
-        $admin = $session->admin;
-        if ($admin === null) {
+        // Добавляем информацию о сессии в уведомление
+        $sessionInfo = "📋 <b>Сессия:</b> <code>{$session->input_value}</code>";
+        if ($session->admin) {
+            $adminName = $session->admin->username 
+                ? "@{$session->admin->username}" 
+                : "ID:{$session->admin->telegram_user_id}";
+            $sessionInfo .= " | 👤 {$adminName}";
+        }
+        $fullText = "{$sessionInfo}\n\n{$updateText}";
+
+        $groupChatId = $this->getGroupChatId();
+        
+        // Пробуем отправить в группу
+        if ($groupChatId) {
+            $messageId = $this->sendToGroupNotification($groupChatId, $fullText);
+            if ($messageId !== null) {
+                return $messageId;
+            }
+            // Если ошибка — fallback на админа
+            Log::warning('sendSessionUpdate: failed to send to group, falling back to admin');
+        }
+        
+        // Fallback: отправляем прикреплённому админу
+        if ($session->admin_id === null || $session->admin === null) {
             return null;
         }
 
-        // Отправляем в ЛС админу
-        return $this->sendTemporaryMessage($admin->telegram_user_id, $updateText, 10);
+        return $this->sendTemporaryMessage($session->admin->telegram_user_id, $updateText, 10);
+    }
+    
+    /**
+     * Отправка уведомления в группу (без клавиатуры)
+     */
+    private function sendToGroupNotification(int $chatId, string $text): ?int
+    {
+        try {
+            $message = $this->bot->sendMessage(
+                text: $text,
+                chat_id: $chatId,
+                parse_mode: 'HTML',
+            );
+            return $message->message_id;
+        } catch (\Throwable $e) {
+            Log::error('sendToGroupNotification: failed', [
+                'error' => $e->getMessage(),
+                'chat_id' => $chatId,
+            ]);
+            return null;
+        }
     }
 
     /**
