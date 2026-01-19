@@ -38,14 +38,8 @@ Route::get('/botodel-icon', function () {
     if (empty($icons)) {
         abort(404, 'Icons not found');
     }
-
-    $icon = $icons[array_rand($icons)];
-    $iconId = $icon['id'] ?? 'Logo_0';
-    $iconNumber = (int) str_replace('Logo_', '', $iconId);
-
     return view('botodel-icon', [
-        'iconNumber' => $iconNumber,
-        'iconSvg' => $icon['content'] ?? '',
+        'icons' => $icons,
     ]);
 })->name('botodel.icon');
 
