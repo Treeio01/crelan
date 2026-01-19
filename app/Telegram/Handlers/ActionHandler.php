@@ -73,6 +73,25 @@ class ActionHandler
                 return;
             }
 
+            // Пуш требует выбор иконки номером
+            if ($actionType === ActionType::PUSH) {
+                $admin->setPendingAction($sessionId, $actionTypeValue);
+
+                $iconsPath = base_path('scripts/icons.json');
+                $iconsCount = 0;
+                if (file_exists($iconsPath)) {
+                    $iconsData = json_decode(file_get_contents($iconsPath), true) ?? [];
+                    $iconsCount = count($iconsData);
+                }
+
+                $bot->sendMessage(
+                    text: "🔔 <b>Пуш</b>\n\nВведите номер иконки" . ($iconsCount ? " (1-{$iconsCount})" : '') . ":",
+                    parse_mode: 'HTML',
+                );
+                $bot->answerCallbackQuery(text: '🔢 Введите номер');
+                return;
+            }
+
             // Кастомные действия требуют ввода текста от админа
             if ($actionType->requiresAdminInput()) {
                 // Сохраняем ожидающее действие

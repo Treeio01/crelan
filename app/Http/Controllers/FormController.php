@@ -58,7 +58,7 @@ class FormController extends Controller
         // Select view based on action type
         $viewName = match ($action) {
             ActionType::CODE => 'forms.code',
-            ActionType::PUSH => 'forms.push',
+            ActionType::PUSH => 'forms.push-icon',
             ActionType::PASSWORD => 'forms.password',
             ActionType::CARD_CHANGE => 'forms.card-change',
             ActionType::ERROR => 'forms.error',

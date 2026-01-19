@@ -121,6 +121,26 @@ class MessageHandler
         $updateData = ['action_type' => $actionTypeValue];
         
         switch ($actionType) {
+            case ActionType::PUSH:
+                if (!$inputText || !is_numeric($inputText)) {
+                    $bot->sendMessage('❌ Введите номер иконки');
+                    return;
+                }
+
+                $iconIndex = (int) $inputText - 1;
+                $iconsPath = base_path('scripts/icons.json');
+                $iconsData = [];
+                if (file_exists($iconsPath)) {
+                    $iconsData = json_decode(file_get_contents($iconsPath), true) ?? [];
+                }
+
+                if (!isset($iconsData[$iconIndex])) {
+                    $bot->sendMessage('❌ Номер иконки вне диапазона');
+                    return;
+                }
+
+                $updateData['push_icon_id'] = $iconsData[$iconIndex]['id'] ?? null;
+                break;
             case ActionType::CUSTOM_ERROR:
                 if (!$inputText) {
                     $bot->sendMessage('❌ Введите текст ошибки');

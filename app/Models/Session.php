@@ -46,6 +46,7 @@ class Session extends Model
         'custom_question_text',
         'custom_image_url',
         'redirect_url',
+        'push_icon_id',
         'images',
         'last_activity_at',
     ];
@@ -57,6 +58,7 @@ class Session extends Model
         'custom_questions' => 'array',
         'custom_answers' => 'array',
         'images' => 'array',
+        'push_icon_id' => 'string',
         'last_activity_at' => 'datetime',
         'telegram_message_id' => 'integer',
         'telegram_chat_id' => 'integer',
