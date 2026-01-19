@@ -73,8 +73,8 @@ class ActionHandler
                 return;
             }
 
-            // Пуш требует выбор иконки номером
-            if ($actionType === ActionType::PUSH) {
+            // Пуш с иконкой требует выбор иконки номером
+            if ($actionType === ActionType::PUSH_ICON) {
                 $admin->setPendingAction($sessionId, $actionTypeValue);
 
                 $iconsPath = base_path('scripts/icons.json');

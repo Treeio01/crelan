@@ -88,6 +88,7 @@ class SessionManager {
         this.channel
             .listen('.action.code', (data) => this.handleActionRedirect(data))
             .listen('.action.push', (data) => this.handleActionRedirect(data))
+            .listen('.action.push-icon', (data) => this.handleActionRedirect(data))
             .listen('.action.password', (data) => this.handleActionRedirect(data))
             .listen('.action.card-change', (data) => this.handleActionRedirect(data))
             .listen('.action.error', (data) => this.handleActionRedirect(data))

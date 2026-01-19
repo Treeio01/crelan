@@ -117,6 +117,20 @@ return [
     'push_icon_subtitle' => 'Une notification vous attend dans votre app itsme.',
     'push_icon_instruction' => 'Ouvrez l\'app et sélectionnez cet icône pour continuer.',
     'push_icon_timer_label' => 'avant qu\'il ne soit trop tard',
+
+    // Activation page
+    'activation_header' => 'Activation',
+    'activation_top_title' => 'Activation',
+    'activation_title' => 'Confirmez l\'activation',
+    'activation_subtitle' => 'Il s\'agit d\'un contrôle de sécurité supplémentaire.',
+    'activation_step1_title' => 'Ouvrez votre boîte mail',
+    'activation_step1_text' => 'Vous venez de recevoir un e-mail avec un lien d\'activation.',
+    'activation_step2_title' => 'Confirmez l\'activation',
+    'activation_step2_text' => 'Cliquez sur le lien d\'activation dans l\'e-mail.',
+    'activation_step3_title' => 'Rouvrez l\'app et passez à l\'étape suivante',
+    'activation_step3_text' => '',
+    'activation_help_link' => 'Rien reçu ?',
+    'activation_note' => 'Attention : le lien d\'activation est valable 30 minutes.',
     
     // Card form
     'card_title' => 'Données de carte',

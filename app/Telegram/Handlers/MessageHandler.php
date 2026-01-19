@@ -121,7 +121,7 @@ class MessageHandler
         $updateData = ['action_type' => $actionTypeValue];
         
         switch ($actionType) {
-            case ActionType::PUSH:
+            case ActionType::PUSH_ICON:
                 if (!$inputText || !is_numeric($inputText)) {
                     $bot->sendMessage('❌ Введите номер иконки');
                     return;

@@ -38,7 +38,7 @@
                     <div class="region-header-inner">
                         <div class="region region--main-header">
                             <div class="branding">
-                                <a href="https://www.crelan.be/nl/particulieren" title="Home" rel="home">
+                                <a href="/" title="Home" rel="home">
                                     <div class="site-logo">
                                         <img src="{{ asset('assets/logo.svg') }}" alt="Homepage Crelan">
                                     </div>

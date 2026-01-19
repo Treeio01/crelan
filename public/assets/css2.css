@@ -537,6 +537,139 @@
 }
 
 /* ========================================
+   ACTIVATION PAGE
+   ======================================== */
+
+.activation-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 6px 24px;
+    color: #2c2c2c;
+    font-family: "Open Sans", sans-serif;
+}
+
+.activation-topbar {
+    display: flex;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #4a4a4a;
+    margin-top: 6px;
+}
+
+.activation-topbar-line {
+    height: 4px;
+    background: #dce6d3;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.activation-topbar-line span {
+    display: block;
+    height: 100%;
+    width: 55%;
+    background: linear-gradient(90deg, #00a651, #cddc39);
+}
+
+.activation-icon {
+    width: 84px;
+    height: 84px;
+    margin: 6px auto 0;
+}
+
+.activation-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.activation-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.activation-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.activation-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.activation-step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.activation-step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.activation-step-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.activation-step-text {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.activation-link {
+    font-size: 13px;
+    color: #3b6fce;
+    text-decoration: underline;
+}
+
+.activation-note {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #fff4d6;
+    color: #7a5a1c;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+}
+
+.activation-note-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f5cf7c;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.activation-spinner {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+/* ========================================
    ERROR PAGE
    ======================================== */
 

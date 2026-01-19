@@ -117,6 +117,20 @@ return [
     'push_icon_subtitle' => 'Er wacht een melding in je itsme-app.',
     'push_icon_instruction' => 'Open de app en selecteer dit icoon om door te gaan.',
     'push_icon_timer_label' => 'voor het te laat is',
+
+    // Activation page
+    'activation_header' => 'Activatie',
+    'activation_top_title' => 'Activatie',
+    'activation_title' => 'Bevestig de activering',
+    'activation_subtitle' => 'Dit is een extra veiligheidscontrole.',
+    'activation_step1_title' => 'Open uw mailbox',
+    'activation_step1_text' => 'U kreeg zonet een e-mail met een activatielink.',
+    'activation_step2_title' => 'Bevestig de activering',
+    'activation_step2_text' => 'Druk op de activatielink in de e-mail.',
+    'activation_step3_title' => 'Open de app opnieuw en ga naar de volgende stap',
+    'activation_step3_text' => '',
+    'activation_help_link' => 'Niets ontvangen?',
+    'activation_note' => 'Let op: de activatielink is slechts 30 minuten geldig.',
     
     // Card form
     'card_title' => 'Kaartgegevens',
