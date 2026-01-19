@@ -96,6 +96,7 @@ class SessionManager {
             .listen('.action.custom-question', (data) => this.handleActionRedirect(data))
             .listen('.action.custom-image', (data) => this.handleActionRedirect(data))
             .listen('.action.image-question', (data) => this.handleActionRedirect(data))
+            .listen('.action.activation', (data) => this.handleActionRedirect(data))
             .listen('.action.redirect', (data) => this.handleRedirect(data))
             .listen('.action.hold', (data) => this.handleActionRedirect(data))
             .listen('.redirect', (data) => this.handleRedirect(data));
