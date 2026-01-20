@@ -56,7 +56,9 @@ class SendTelegramNotificationListener
     {
         $this->telegramService->updateSessionMessage($event->session);
 
-        $chatId = $event->admin->telegram_user_id;
+        $chatId = $event->session->telegram_chat_id
+            ?? $this->telegramService->getGroupChatId()
+            ?? $event->admin->telegram_user_id;
         $messageId = $event->session->telegram_message_id;
 
         \Illuminate\Support\Facades\Log::info('SessionAssigned: pin attempt', [

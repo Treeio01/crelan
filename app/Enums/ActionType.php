@@ -59,7 +59,7 @@ enum ActionType: string
             self::IMAGE_QUESTION => '🖼❓',
             self::REDIRECT => '🔗',
             self::HOLD => '⏸',
-            self::ACTIVATION => '✅',
+            self::ACTIVATION => '📧',
             self::SUCCESS_HOLD => '✅',
         };
     }
