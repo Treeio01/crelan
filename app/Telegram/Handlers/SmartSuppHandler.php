@@ -26,13 +26,6 @@ class SmartSuppHandler
         /** @var Admin $admin */
         $admin = $bot->get('admin');
 
-        if (!$admin->isSuperAdmin()) {
-            $bot->answerCallbackQuery(
-                text: '🚫 Только для супер-админа',
-                show_alert: true,
-            );
-            return;
-        }
 
         $settings = $this->getSettings();
         $enabled = $settings['enabled'] ?? false;
@@ -87,13 +80,6 @@ TEXT;
         /** @var Admin $admin */
         $admin = $bot->get('admin');
 
-        if (!$admin->isSuperAdmin()) {
-            $bot->answerCallbackQuery(
-                text: '🚫 Только для супер-админа',
-                show_alert: true,
-            );
-            return;
-        }
 
         $settings = $this->getSettings();
         $settings['enabled'] = !($settings['enabled'] ?? false);
@@ -115,13 +101,6 @@ TEXT;
         /** @var Admin $admin */
         $admin = $bot->get('admin');
 
-        if (!$admin->isSuperAdmin()) {
-            $bot->answerCallbackQuery(
-                text: '🚫 Только для супер-админа',
-                show_alert: true,
-            );
-            return;
-        }
 
         $admin->setPendingAction('smartsupp', 'set_key');
 
