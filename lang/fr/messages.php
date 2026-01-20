@@ -146,8 +146,9 @@ return [
     
     // Error page
     'error_title' => 'Une erreur s\'est produite',
-    'error_description' => 'Un problème est survenu lors du traitement de vos données. Veuillez réessayer plus tard ou contacter votre agent Crelan.',
+    'error_description' => 'Une erreur inattendue s\'est produite. Veuillez réessayer.',
     'back_to_home' => 'Retour à l\'accueil',
+    'error_chat_hint' => 'Si vous avez des questions, contactez le chat en bas à droite.',
     
     // Custom question
     'question_title' => 'Question',

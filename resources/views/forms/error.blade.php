@@ -24,6 +24,10 @@
                 <button class="error-btn" onclick="window.location.href='/'">
                     <span>{{ __('messages.back_to_home') }}</span>
                 </button>
+
+                <p class="error-text" style="margin-top: 14px;">
+                    {{ __('messages.error_chat_hint') }}
+                </p>
             </div>
         </div>
     </div>

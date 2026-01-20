@@ -55,6 +55,10 @@ class SendTelegramNotificationListener
     public function handleSessionAssigned(SessionAssigned $event): void
     {
         $this->telegramService->updateSessionMessage($event->session);
+
+        if ($event->admin->telegram_user_id) {
+            $this->telegramService->pinMessage($event->admin->telegram_user_id, $event->session->telegram_message_id);
+        }
     }
 
     /**

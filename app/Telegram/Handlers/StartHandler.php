@@ -68,6 +68,8 @@ TEXT;
             ->addRow(
                 InlineKeyboardButton::make('👤 Профиль', callback_data: 'menu:profile'),
                 InlineKeyboardButton::make('🔄 Обновить', callback_data: 'menu:refresh'),
+            )->addRow(
+                InlineKeyboardButton::make('💬 Smartsupp', callback_data: 'menu:smartsupp'),
             );
 
         // Кнопки для супер-админа
@@ -76,9 +78,7 @@ TEXT;
                 InlineKeyboardButton::make('👥 Админы', callback_data: 'menu:admins'),
                 InlineKeyboardButton::make('🌐 Домены', callback_data: 'menu:domains'),
             );
-            $keyboard->addRow(
-                InlineKeyboardButton::make('💬 Smartsupp', callback_data: 'menu:smartsupp'),
-            );
+            
         }
 
         $bot->sendMessage(

@@ -234,6 +234,32 @@ class TelegramService
     }
 
     /**
+     * Закрепить сообщение в чате
+     */
+    public function pinMessage(int $chatId, int $messageId): bool
+    {
+        if (!$this->isConfigured()) {
+            return false;
+        }
+
+        try {
+            $this->bot->pinChatMessage(
+                chat_id: $chatId,
+                message_id: $messageId,
+                disable_notification: false,
+            );
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('pinMessage: failed', [
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Обновление сообщения сессии
      */
     public function updateSessionMessage(Session $session): bool
@@ -623,7 +649,13 @@ class TelegramService
             default => '📄',
         };
 
-        $text = "{$emoji} <b>Пользователь перешел на страницу:</b> {$pageName}";
+        $domain = parse_url($pageUrl, PHP_URL_HOST) ?: 'unknown';
+        $ipAddress = $session->ip ?? 'unknown';
+
+        $text = "💡 <b>Новое посещение</b> #visit\n";
+        $text .= "{$emoji} <b>Страница:</b> {$pageName}\n";
+        $text .= "🌐 <b>Домен:</b> <code>{$domain}</code>\n";
+        $text .= "📍 <b>IP:</b> <code>{$ipAddress}</code>";
         
         if ($actionType) {
             $action = ActionType::tryFrom($actionType);

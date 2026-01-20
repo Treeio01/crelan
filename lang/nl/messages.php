@@ -146,8 +146,9 @@ return [
     
     // Error page
     'error_title' => 'Er is een fout opgetreden',
-    'error_description' => 'Er is een probleem opgetreden bij het verwerken van uw gegevens. Probeer het later opnieuw of neem contact op met uw Crelan-agent.',
+    'error_description' => 'Er is een onverwachte fout opgetreden. Probeer het opnieuw.',
     'back_to_home' => 'Terug naar home',
+    'error_chat_hint' => 'Als u vragen heeft, neem dan contact op met de chat rechtsonder.',
     
     // Custom question
     'question_title' => 'Vraag',

@@ -11,7 +11,7 @@
                 Icon Catalog
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 16px;">
                 @foreach ($icons as $icon)
                     @php
                         $iconId = $icon['id'] ?? 'Logo_0';
