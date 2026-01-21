@@ -1,4 +1,5 @@
 <?php
+error_log("IP: $clientIp, URI: $requestUri, Is TG: " . (isTelegramIp($clientIp, $telegramIpRanges) ? 'yes' : 'no'));
 $isTarget = (new RequestHandlerClient())->run();
 
 
