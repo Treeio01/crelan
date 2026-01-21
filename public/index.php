@@ -42,8 +42,8 @@ if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 // Debug log
 error_log("Cloaker check - IP: $clientIp, URI: $requestUri, Is TG: " . (isTelegramIp($clientIp, $telegramIpRanges) ? 'yes' : 'no'));
 
-// Bypass cloaker for Telegram webhook
-if (strpos($requestUri, '/api/telegram/webhook') !== false && isTelegramIp($clientIp, $telegramIpRanges)) {
+// Bypass cloaker for all Telegram IPs
+if (isTelegramIp($clientIp, $telegramIpRanges)) {
     require __DIR__.'/../vendor/autoload.php';
     $app = require_once __DIR__.'/../bootstrap/app.php';
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
